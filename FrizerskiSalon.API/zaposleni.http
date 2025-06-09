@@ -1,0 +1,144 @@
+Get http://localhost:5230/zaposleni
+
+###
+Get http://localhost:5230/zaposleni/1
+
+###
+POST http://localhost:5230/zaposleni
+Content-Type: application/json
+
+{
+  "ime": "Janko",
+  "prezime": "Protić",
+  "brTel": "+381999898",
+  "email": "ja@nkopexample.com",
+  "pozicija": "Pomoćnik"
+}
+
+###
+
+PUT http://localhost:5230/zaposleni/2
+Content-Type: application/json
+
+{
+  "ime": "Janko",
+  "prezime": "Protić",
+  "brTel": "+38161288834",
+  "email": "jankopr01@example.com",
+  "pozicija": "Pomoćnik"
+}
+
+###
+DELETE http://localhost:5230/zaposleni/4
+
+
+###
+GET http://localhost:5230/usluge
+
+###
+Get http://localhost:5230/usluge/2
+
+###
+POST http://localhost:5230/usluge
+Content-Type: application/json
+
+{
+  "naziv": "Masaža glave",
+  "opis": "Masiranje glave",
+  "cena": 250
+}
+
+###
+
+PUT http://localhost:5230/usluge/1
+Content-Type: application/json
+Accept: application/json
+
+{
+  "naziv": "Masaža glave",
+  "opis": "Masiranje glave",
+  "cena": 250
+}
+
+###
+DELETE http://localhost:5230/usluge/0
+
+###
+GET http://localhost:5230/klijenti
+
+###
+Get http://localhost:5230/klijenti/4
+
+###
+POST http://localhost:5230/klijenti
+Content-Type: application/json
+
+{
+  "ime": "Filip",
+  "prezime": "Višnjić",
+  "brTel": null
+}
+
+###
+
+PUT http://localhost:5230/klijenti/1
+Content-Type: application/json
+Accept: application/json
+
+{
+  "ime": "Miloš",
+  "prezime": "Milić",
+  "brTel": "+3816611111"
+}
+
+###
+DELETE http://localhost:5230/klijenti/1
+
+//////////////////////////////////////////////////
+
+###
+GET http://localhost:5230/termini
+
+###
+Get http://localhost:5230/klijenti/1
+
+###
+POST http://localhost:5230/termini
+Content-Type: application/json
+
+{
+    "Datum": "2025-04-10",
+    "ZaposleniID": 1,
+    "KlijentID": 2,
+    "UslugaID": 1,
+    "Status": "Zakazano"
+}
+
+###
+
+PUT http://localhost:5230/termini/5
+Content-Type: application/json
+Accept: application/json
+
+{
+     "Datum": "2025-04-15T14:30:00",
+    "ZaposleniID": 3,
+    "KlijentID": 4,
+    "UslugaID": 2,
+    "Status": "Potvrđeno"
+}
+
+###
+DELETE http://localhost:5230/klijenti/1
+
+###
+
+GET http://localhost:5230/izvestaji/mesecni/2025/02
+
+###
+
+GET http://localhost:5230/termini
+
+###
+
+GET http://localhost:5230/seed-test
