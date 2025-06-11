@@ -1,2 +1,2 @@
-# Frizer
+# HairSalonAPI
 
