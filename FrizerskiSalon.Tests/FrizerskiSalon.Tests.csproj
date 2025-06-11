@@ -22,8 +22,7 @@
 
 
   <ItemGroup>
-    <ProjectReference Include="..\FrizerskiSalon.API\FrizerskiSalon.API.csproj" />
-    <ProjectReference Include="FrizerskiSalon.API\FrizerskiSalon.API.csproj" />
+      <ProjectReference Include="..\FrizerskiSalon.API\FrizerskiSalon.API.csproj" />
     
   </ItemGroup>
 

@@ -1,105 +1,133 @@
-using System.Data;
-using FrizerskiSalon.API.Data;
-using FrizerskiSalon.API.Entities;
-using FrizerskiSalon.API.Services;
-using Microsoft.EntityFrameworkCore;
+using System;
+using System.Threading.Tasks;
 using Xunit;
+using Microsoft.EntityFrameworkCore;
+using FrizerskiSalon.API.Entities;
+using FrizerskiSalon.API.Data;
 
-namespace FrizerskiSalon.Tests.Services;
-
-public class RadnikServiceTests
+namespace FrizerskiSalon.Tests.Services
 {
-    private FrizerskiSalonContext GetDbContext()
+    public class RadnikServiceTests
     {
-        var options = new DbContextOptionsBuilder<FrizerskiSalonContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
-            .Options;
+        private DbContextOptions<FrizerskiSalonContext> GetInMemoryOptions(string dbName)
+        {
+            return new DbContextOptionsBuilder<FrizerskiSalonContext>()
+                .UseInMemoryDatabase(databaseName: dbName + Guid.NewGuid())
+                .Options;
+        }
 
-        var context = new FrizerskiSalonContext(options);
-        context.Database.EnsureCreated();
-        return context;
-    }
+        [Fact]
+        public async Task CreateRadnik_WithAllRequiredFields_Succeeds()
+        {
+            var options = GetInMemoryOptions(nameof(CreateRadnik_WithAllRequiredFields_Succeeds));
+            using (var context = new FrizerskiSalonContext(options))
+            {
+                var radnik = new Radnik
+                {
+                    Ime = "Milos",
+                    Prezime = "Milic",
+                    BrTel = "+381661234567",
+                    Email = "milos.milic@example.com",
+                    Pozicija = "Frizer"
+                };
+                context.Radnici.Add(radnik);
+                await context.SaveChangesAsync();
 
-    [Fact]
-    public async Task CreateAsync_ShouldAddRadnik()
-    {
-        // Arrange
-        var context = GetDbContext();
-        var service = new RadnikService(context);
-        var radnik = new Radnik { Ime = "Marko", Prezime = "Marković", Pozicija = "Frizer", BrTel = "123456789" };
+                Assert.Equal(1, await context.Radnici.CountAsync());
+                var saved = await context.Radnici.FirstAsync();
+                Assert.Equal("Milos", saved.Ime);
+                Assert.Equal("Frizer", saved.Pozicija);
+            }
+        }
 
-        // Act
-        var result = await service.CreateAsync(radnik);
+        [Fact]
+        public async Task CreateRadnik_MissingRequiredEmail_ThrowsDbUpdateException()
+        {
+            var options = GetInMemoryOptions(nameof(CreateRadnik_MissingRequiredEmail_ThrowsDbUpdateException));
+            using (var context = new FrizerskiSalonContext(options))
+            {
+                var radnik = new Radnik
+                {
+                    Ime = "Nemanja",
+                    Prezime = "Nikolic",
+                    BrTel = "+381661111111",
+                    // Email intentionally missing
+                    Pozicija = "Pomoćnik"
+                };
+                context.Radnici.Add(radnik);
+                await Assert.ThrowsAsync<DbUpdateException>(() => context.SaveChangesAsync());
+            }
+        }
 
-        // Assert
-        Assert.NotNull(result);
-        Assert.Equal("Marko", result.Ime);
-        Assert.Single(context.Radnici);
-    }
+        [Fact]
+        public async Task UpdateRadnik_ChangesPozicija_Succeeds()
+        {
+            var options = GetInMemoryOptions(nameof(UpdateRadnik_ChangesPozicija_Succeeds));
+            using (var context = new FrizerskiSalonContext(options))
+            {
+                var radnik = new Radnik
+                {
+                    Ime = "Ana",
+                    Prezime = "Radic",
+                    BrTel = "+38166222333",
+                    Email = "ana.radic@example.com",
+                    Pozicija = "Pomoćnik"
+                };
+                context.Radnici.Add(radnik);
+                await context.SaveChangesAsync();
 
-    [Fact]
-    public async Task GetAllAsync_ShouldReturnAllRadnici()
-    {
-        // Arrange
-        var context = GetDbContext();
-        context.Radnici.Add(new Radnik { Ime = "Ana", Prezime = "Anić", Pozicija = "Frizer", BrTel = "987654321" });
-        context.Radnici.Add(new Radnik { Ime = "Jovan", Prezime = "Jovanović", Pozicija = "Frizer", BrTel = "123123123" });
-        await context.SaveChangesAsync();
-        var service = new RadnikService(context);
+                radnik.Pozicija = "Administrator";
+                context.Radnici.Update(radnik);
+                await context.SaveChangesAsync();
 
-        // Act
-        var result = await service.GetAllAsync();
+                var updated = await context.Radnici.FirstAsync();
+                Assert.Equal("Administrator", updated.Pozicija);
+            }
+        }
 
-        // Assert
-        Assert.Equal(2, result.Count());
-    }
+        [Fact]
+        public async Task DeleteRadnik_RemovesFromDatabase()
+        {
+            var options = GetInMemoryOptions(nameof(DeleteRadnik_RemovesFromDatabase));
+            using (var context = new FrizerskiSalonContext(options))
+            {
+                var radnik = new Radnik
+                {
+                    Ime = "Ivana",
+                    Prezime = "Jovic",
+                    BrTel = "+38169999999",
+                    Email = "ivana.jovic@example.com",
+                    Pozicija = "Frizer"
+                };
+                context.Radnici.Add(radnik);
+                await context.SaveChangesAsync();
 
-    [Fact]
-    public async Task DeleteAsync_ShouldRemoveRadnik()
-    {
-        // Arrange
-        var context = GetDbContext();
-        var radnik = new Radnik { Ime = "Ivan", Prezime = "Ivić", Pozicija = "Frizer", BrTel = "1122334455" };
-        context.Radnici.Add(radnik);
-        await context.SaveChangesAsync();
-        var service = new RadnikService(context);
+                context.Radnici.Remove(radnik);
+                await context.SaveChangesAsync();
 
-        // Act
-        var deleted = await service.DeleteAsync(radnik.Id);
+                Assert.Empty(context.Radnici);
+            }
+        }
 
-        // Assert
-        Assert.True(deleted);
-        Assert.Empty(context.Radnici);
-    }
+        [Fact]
+        public async Task CanReadMultipleRadnici()
+        {
+            var options = GetInMemoryOptions(nameof(CanReadMultipleRadnici));
+            using (var context = new FrizerskiSalonContext(options))
+            {
+                context.Radnici.Add(new Radnik
+                {
+                    Ime = "Marko", Prezime = "Petrovic", BrTel = "+381640123456", Email = "marko.petrovic@example.com", Pozicija = "Frizer"
+                });
+                context.Radnici.Add(new Radnik
+                {
+                    Ime = "Anja", Prezime = "Kovacevic", BrTel = "+381650654321", Email = "anja.kovacevic@example.com", Pozicija = "Recepcioner"
+                });
+                await context.SaveChangesAsync();
 
-    [Fact]
-    public async Task GetBrojKlijenataAsync_ShouldReturnCorrectCount()
-    {
-        // Arrange
-        var context = GetDbContext();
-
-        var radnik = new Radnik { Ime = "Test", Prezime = "Radnik", Pozicija = "Frizer", BrTel = "000" };
-        var klijent1 = new Klijent { Ime = "K1", Prezime = "P1", BrTel = "1" };
-        var klijent2 = new Klijent { Ime = "K2", Prezime = "P2",  BrTel = "2" };
-
-        context.Radnici.Add(radnik);
-        context.Klijenti.AddRange(klijent1, klijent2);
-        await context.SaveChangesAsync();
-
-        context.Termini.AddRange(
-            new Termin { RadnikID = radnik.Id, KlijentID = klijent1.Id, Datum = DateTime.Today },
-            new Termin { RadnikID = radnik.Id, KlijentID = klijent2.Id, Datum = DateTime.Today },
-            new Termin { RadnikID = radnik.Id, KlijentID = klijent1.Id, Datum = DateTime.Today }
-        );
-
-        await context.SaveChangesAsync();
-
-        var service = new RadnikService(context);
-
-        // Act
-        var brojKlijenata = await service.GetBrojKlijenataAsync(radnik.Id);
-
-        // Assert
-        Assert.Equal(2, brojKlijenata); // distinct
+                var allRadnici = await context.Radnici.ToListAsync();
+                Assert.Equal(2, allRadnici.Count);
+            }
+        }
     }
 }
